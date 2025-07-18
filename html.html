@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>کارت ملی</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        background-color: #f0f0f0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        margin: 0;
+        padding: 20px;
+      }
+
+      .id-card {
+        background-color: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        width: 100%;
+        max-width: 450px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .id-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 40px;
+        background: linear-gradient(90deg, #006d77, #83c5be);
+      }
+
+      .id-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 50px 20px 10px;
+        border-bottom: 2px solid #eee;
+      }
+
+      .id-title {
+        font-weight: bold;
+        font-size: 20px;
+        color: #006d77;
+      }
+
+      .id-number {
+        background-color: #f8f8f8;
+        padding: 5px 10px;
+        border-radius: 5px;
+        font-weight: bold;
+        color: #333;
+        border: 1px dashed #ccc;
+      }
+
+      .id-content {
+        display: flex;
+        padding: 20px;
+      }
+
+      .id-photo {
+        width: 120px;
+        height: 150px;
+        border: 1px solid #ddd;
+        margin-left: 20px;
+        overflow: hidden;
+      }
+
+      .id-photo img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .id-details {
+        flex: 1;
+      }
+
+      .id-row {
+        display: flex;
+        margin-bottom: 10px;
+      }
+
+      .id-label {
+        width: 100px;
+        font-weight: bold;
+        color: #555;
+      }
+
+      .id-value {
+        flex: 1;
+        color: #333;
+      }
+
+      .id-footer {
+        background-color: #f8f8f8;
+        padding: 15px 20px;
+        display: flex;
+        justify-content: space-between;
+        border-top: 1px solid #eee;
+      }
+
+      .id-issue-date,
+      .id-expiry-date {
+        font-size: 14px;
+        color: #666;
+      }
+
+      .id-signature {
+        margin-top: 15px;
+        border-top: 1px dashed #ccc;
+        padding-top: 5px;
+        font-style: italic;
+        color: #555;
+      }
+
+      .loading {
+        text-align: center;
+        padding: 40px;
+        font-size: 18px;
+        color: #666;
+      }
+
+      .error {
+        text-align: center;
+        padding: 40px;
+        font-size: 18px;
+        color: #e63946;
+      }
+
+      .watermark {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(-30deg);
+        font-size: 60px;
+        color: rgba(0, 0, 0, 0.05);
+        pointer-events: none;
+        white-space: nowrap;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="id-card" class="id-card">
+      <div class="loading">در حال بارگذاری...</div>
+    </div>
+
+    <script>
+      fetch("https://randomuser.me/api/")
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("خطا در دریافت اطلاعات");
+          }
+          return response.json();
+        })
+        .then((data) => {
+          const person = data.results[0];
+          displayIDCard(person);
+        })
+        .catch((error) => {
+          document.getElementById("id-card").innerHTML = `
+                    <div class="error">
+                        خطا در بارگذاری اطلاعات: ${error.message}
+                    </div>
+                `;
+        });
+
+      function displayIDCard(person) {
+        const nationalID = generateRandomNationalID();
+
+        const dob = new Date(person.dob.date);
+        const birthDate = `${dob.getFullYear()}/${
+          dob.getMonth() + 1
+        }/${dob.getDate()}`;
+
+        const issueDate = "1400/03/15";
+        const expiryDate = "1410/03/15";
+
+        const cardHTML = `
+                <div class="watermark">جمهوری اسلامی ایران</div>
+                <div class="id-header">
+                    <div class="id-title">کارت ملی هوشمند</div>
+                    <div class="id-number">${nationalID}</div>
+                </div>
+                <div class="id-content">
+                    <div class="id-photo">
+                        <img src="${person.picture.large}" alt="عکس پرسنلی">
+                    </div>
+                    <div class="id-details">
+                        <div class="id-row">
+                            <div class="id-label">نام:</div>
+                            <div class="id-value">${persianName(
+                              person.name.first
+                            )}</div>
+                        </div>
+                        <div class="id-row">
+                            <div class="id-label">نام خانوادگی:</div>
+                            <div class="id-value">${persianName(
+                              person.name.last
+                            )}</div>
+                        </div>
+                        <div class="id-row">
+                            <div class="id-label">نام پدر:</div>
+                            <div class="id-value">${generatePersianName()}</div>
+                        </div>
+                        <div class="id-row">
+                            <div class="id-label">تاریخ تولد:</div>
+                            <div class="id-value">${birthDate}</div>
+                        </div>
+                        <div class="id-row">
+                            <div class="id-label">محل تولد:</div>
+                            <div class="id-value">${generatePersianCity()}</div>
+                        </div>
+                        <div class="id-row">
+                            <div class="id-label">جنسیت:</div>
+                            <div class="id-value">${
+                              person.gender === "male" ? "مرد" : "زن"
+                            }</div>
+                        </div>
+                        <div class="id-signature">امضا: ${persianName(
+                          person.name.first
+                        )} ${persianName(person.name.last)}</div>
+                    </div>
+                </div>
+                <div class="id-footer">
+                    <div class="id-issue-date">تاریخ صدور: ${issueDate}</div>
+                    <div class="id-expiry-date">تاریخ انقضا: ${expiryDate}</div>
+                </div>
+            `;
+
+        document.getElementById("id-card").innerHTML = cardHTML;
+      }
+
+      function generateRandomNationalID() {
+        let id = "";
+        for (let i = 0; i < 10; i++) {
+          id += Math.floor(Math.random() * 10);
+        }
+        return id;
+      }
+
+      function persianName(name) {
+        const persianNames = {
+          john: "جواد",
+          david: "داوود",
+          michael: "محمد",
+          james: "جمشید",
+          robert: "رضا",
+          william: "وحید",
+          mary: "مریم",
+          patricia: "پریسا",
+          jennifer: "ژاله",
+          linda: "لیلا",
+          elizabeth: "الهام",
+          smith: "صادقی",
+          johnson: "جعفری",
+          williams: "ولی‌زاده",
+          jones: "جوادی",
+          brown: "براتی",
+          davis: "دانشی",
+          miller: "ملکی",
+          wilson: "وحیدی",
+          moore: "محمدی",
+          taylor: "تقوی",
+          anderson: "احمدی",
+          thomas: "طاهری",
+          jackson: "جلالی",
+          white: "وحدتی",
+        };
+
+        const lowerName = name.toLowerCase();
+        return persianNames[lowerName] || name;
+      }
+
+      function generatePersianName() {
+        const names = [
+          "علی",
+          "حسین",
+          "محمد",
+          "رضا",
+          "مهدی",
+          "امیر",
+          "حسن",
+          "سعید",
+          "جواد",
+          "کاظم",
+        ];
+        return names[Math.floor(Math.random() * names.length)];
+      }
+
+      function generatePersianCity() {
+        const cities = [
+          "تهران",
+          "مشهد",
+          "اصفهان",
+          "شیراز",
+          "تبریز",
+          "قم",
+          "اهواز",
+          "کرمان",
+          "رشت",
+          "همدان",
+        ];
+        return cities[Math.floor(Math.random() * cities.length)];
+      }
+    </script>
+  </body>
+</html>
